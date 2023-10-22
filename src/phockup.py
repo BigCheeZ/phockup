@@ -65,6 +65,7 @@ class Phockup:
         if self.to_date is not None:
             self.to_date = Date.strptime(f"{self.to_date} 23:59:59", "%Y-%m-%d %H:%M:%S")
 
+        self.use_shallow_cmp = args.get("use_shallow_cmp", False)
         if self.max_concurrency > 1:
             logger.info(f"Using {self.max_concurrency} workers to process files.")
 
@@ -319,7 +320,7 @@ but looking for '{self.file_type}'"
                     break
 
             if os.path.isfile(target_file):
-                if filename != target_file and filecmp.cmp(filename, target_file, shallow=False):
+                if filename != target_file and filecmp.cmp(filename, target_file, shallow=self.use_shallow_cmp):
                     if self.movedel and self.move and self.skip_unknown:
                         if not self.dry_run:
                             os.remove(filename)

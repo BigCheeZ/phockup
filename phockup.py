@@ -340,6 +340,17 @@ Example:
             """,
     )
 
+    parser.add_argument(
+        '--use-shallow-cmp',
+        action='store_true',
+        default=False,
+        help="""\
+        Skips comparing checksums when a file already exists in the
+        destination directory. Instead will only check file type, size,
+        and modification time.
+        """
+    )
+
     return parser.parse_args(args)
 
 
@@ -392,6 +403,7 @@ def main(options):
         output_suffix=options.output_suffix,
         from_date=options.from_date,
         to_date=options.to_date
+        use_shallow_cmp=options.use_shallow_cmp
     )
 
 
