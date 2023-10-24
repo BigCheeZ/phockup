@@ -212,6 +212,11 @@ class Phockup:
         patternVideo = re.compile('^(video/.*)$')
         if patternVideo.match(mimetype):
             return 'video'
+
+        patternXMP = re.compile(r'^(application/rdf\+xml)$')
+        if patternXMP.match(mimetype):
+            return 'xmp'
+
         return None
 
     def get_output_dir(self, date):
@@ -390,14 +395,29 @@ but looking for '{self.file_type}'"
         """
         Returns target file name and path
         """
-        exif_data = Exif(filename).data()
+
+        # If xmp file exists then use its data instead of exif data from media
+        xmp_original_with_ext = filename + '.xmp'
+        xmp_original_without_ext = os.path.splitext(filename)[0] + '.xmp'
+
+        xmp_filename = None
+
+        if os.path.isfile(xmp_original_with_ext):
+            xmp_filename = xmp_original_with_ext
+        if os.path.isfile(xmp_original_without_ext):
+            xmp_filename = xmp_original_without_ext
+
+        if xmp_filename is None:
+            exif_data = Exif(filename).data()
+        else:
+            exif_data = Exif(xmp_filename).data()
         target_file_type = None
 
         if exif_data and 'MIMEType' in exif_data:
             target_file_type = self.get_file_type(exif_data['MIMEType'])
 
         date = None
-        if target_file_type in ['image', 'video']:
+        if target_file_type in ['image', 'video', 'xmp']:
             date = Date(filename).from_exif(exif_data, self.timestamp, self.date_regex,
                                             self.date_field)
             output = self.get_output_dir(date)
@@ -411,6 +431,8 @@ but looking for '{self.file_type}'"
         target_file_path = os.path.sep.join([output, target_file_name])
         return output, target_file_name, target_file_path, target_file_type, date
 
+    # This function just copies the XMP file to the target. It does not actually
+    # use the XMP data finding the proper date of the file.
     def process_xmp(self, original_filename, file_name, suffix, output):
         """
         Process xmp files. These are metadata for RAW images
