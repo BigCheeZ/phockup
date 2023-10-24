@@ -15,6 +15,11 @@ from src.exif import Exif
 
 logger = logging.getLogger('phockup')
 ignored_files = ('.DS_Store', 'Thumbs.db')
+# List of file extensions that will be ignored
+ignored_extensions = [
+    '.lrv',  # Low resolution gopro
+    '.thm'   # Gopro thumbnails
+]
 
 
 class Phockup:
@@ -146,6 +151,13 @@ class Phockup:
             file_paths_to_process = []
             for filename in files:
                 if filename in ignored_files:
+                    continue
+                ext_match = False
+                for ext in ignored_extensions:
+                    if filename.lower().endswith(ext):
+                        logger.debug(f"Skipping '{filename}' since filename ends with '{ext}'")
+                        ext_match = True
+                if ext_match is True:
                     continue
                 file_paths_to_process.append(os.path.join(root, filename))
             if self.max_concurrency > 1:
