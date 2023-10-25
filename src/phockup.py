@@ -20,6 +20,10 @@ ignored_extensions = [
     '.lrv',  # Low resolution gopro
     '.thm'   # Gopro thumbnails
 ]
+known_sidecar_extensions = [
+    '.xmp',  # Used by many applications (eg: Lightroom)
+    'O.aae'  # Used by Apple for things like portrait photos
+]
 
 
 class Phockup:
@@ -291,10 +295,11 @@ class Phockup:
     def process_file(self, filename):
         """
         Process the file using the selected strategy
-        If file is .xmp skip it so process_xmp method can handle it
+        If file is a sidecar, then skip it so process_sidecars method can handle it
         """
-        if str.endswith(filename, '.xmp'):
-            return None
+        for sidecar_ext in known_sidecar_extensions:
+            if str.endswith(filename, sidecar_ext):
+                return None
 
         progress = f'{filename}'
 
@@ -380,7 +385,7 @@ but looking for '{self.file_type}'"
                     self.pbar.write(progress)
                 logger.info(progress)
 
-                self.process_xmp(filename, target_file_name, suffix, output)
+                self.process_sidecars(filename, target_file_name, suffix, output)
                 break
 
             suffix += 1
@@ -431,34 +436,38 @@ but looking for '{self.file_type}'"
         target_file_path = os.path.sep.join([output, target_file_name])
         return output, target_file_name, target_file_path, target_file_type, date
 
-    # This function just copies the XMP file to the target. It does not actually
-    # use the XMP data finding the proper date of the file.
-    def process_xmp(self, original_filename, file_name, suffix, output):
+    # This function just copies the found sidecar files to the target. It does
+    # not actually use the sidecar data in this function.
+    def process_sidecars(self, original_filename, file_name, suffix, output):
         """
-        Process xmp files. These are metadata for RAW images
+        Process sidecar files. These are metadata for RAW images
+        Potential sidecar files may include:
+          xmp - Used by many applications
+          aae - Used by Apple for portait photos and videos
         """
-        xmp_original_with_ext = original_filename + '.xmp'
-        xmp_original_without_ext = os.path.splitext(original_filename)[0] + '.xmp'
+        for sidecar_ext in known_sidecar_extensions:
+            sidecar_original_with_ext = original_filename + sidecar_ext
+            sidecar_original_without_ext = os.path.splitext(original_filename)[0] + sidecar_ext
 
-        suffix = f'-{suffix}' if suffix > 1 else ''
+            string_suffix = f'-{suffix}' if suffix > 1 else ''
 
-        xmp_files = {}
+            sidecar_files = {}
 
-        if os.path.isfile(xmp_original_with_ext):
-            xmp_target = f'{file_name}{suffix}.xmp'
-            xmp_files[xmp_original_with_ext] = xmp_target
-        if os.path.isfile(xmp_original_without_ext):
-            xmp_target = f'{(os.path.splitext(file_name)[0])}{suffix}.xmp'
-            xmp_files[xmp_original_without_ext] = xmp_target
+            if os.path.isfile(sidecar_original_with_ext):
+                sidecar_target = f'{file_name}{string_suffix}{sidecar_ext}'
+                sidecar_files[sidecar_original_with_ext] = sidecar_target
+            if os.path.isfile(sidecar_original_without_ext):
+                sidecar_target = f'{(os.path.splitext(file_name)[0])}{string_suffix}{sidecar_ext}'
+                sidecar_files[sidecar_original_without_ext] = sidecar_target
 
-        for original, target in xmp_files.items():
-            xmp_path = os.path.sep.join([output, target])
-            logger.info(f'{original} => {xmp_path}')
+            for original, target in sidecar_files.items():
+                sidecar_path = os.path.sep.join([output, target])
+                logger.info(f'{original} => {sidecar_path}')
 
-            if not self.dry_run:
-                if self.move:
-                    shutil.move(original, xmp_path)
-                elif self.link:
-                    os.link(original, xmp_path)
-                else:
-                    shutil.copy2(original, xmp_path)
+                if not self.dry_run:
+                    if self.move:
+                        shutil.move(original, sidecar_path)
+                    elif self.link:
+                        os.link(original, sidecar_path)
+                    else:
+                        shutil.copy2(original, sidecar_path)
