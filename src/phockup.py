@@ -22,7 +22,7 @@ ignored_extensions = [
 ]
 known_sidecar_extensions = [
     '.xmp',  # Used by many applications (eg: Lightroom)
-    'O.aae'  # Used by Apple for things like portrait photos
+    '.aae'  # Used by Apple for things like portrait photos
 ]
 
 
@@ -448,6 +448,12 @@ but looking for '{self.file_type}'"
         for sidecar_ext in known_sidecar_extensions:
             sidecar_original_with_ext = original_filename + sidecar_ext
             sidecar_original_without_ext = os.path.splitext(original_filename)[0] + sidecar_ext
+            # *.aae files have odd naming. For an image IMG_0123.HEIC there can be:
+            # - IMG_O0123.aae
+            # - IMG_0123O.aae
+            # There is a 'O' but it can be in different places.
+            sidecar_original_leading_o = os.path.splitext(original_filename)[0].replace("IMG_", "IMG_O") + sidecar_ext
+            sidecar_original_trailing_o = os.path.splitext(original_filename)[0] + 'O' + sidecar_ext
 
             string_suffix = f'-{suffix}' if suffix > 1 else ''
 
@@ -459,6 +465,12 @@ but looking for '{self.file_type}'"
             if os.path.isfile(sidecar_original_without_ext):
                 sidecar_target = f'{(os.path.splitext(file_name)[0])}{string_suffix}{sidecar_ext}'
                 sidecar_files[sidecar_original_without_ext] = sidecar_target
+            if os.path.isfile(sidecar_original_leading_o):
+                sidecar_target = f'{(os.path.splitext(file_name.replace("IMG_", "IMG_O"))[0])}{string_suffix}{sidecar_ext}'
+                sidecar_files[sidecar_original_leading_o] = sidecar_target
+            if os.path.isfile(sidecar_original_trailing_o):
+                sidecar_target = f'{(os.path.splitext(file_name)[0])}O{string_suffix}{sidecar_ext}'
+                sidecar_files[sidecar_original_trailing_o] = sidecar_target
 
             for original, target in sidecar_files.items():
                 sidecar_path = os.path.sep.join([output, target])
