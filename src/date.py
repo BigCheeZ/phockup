@@ -52,7 +52,7 @@ class Date:
                 if ('-' in exif[key]) or ('+' in exif[key]):
                     # There is an exception for FileModifyDate since it may have timezone information
                     # since new tools have changed it when we still want the old date.
-                    if (key == 'FileModifyDate'):
+                    if (key == 'FileModifyDate') and (datestr_no_timezone is not None):
                         continue
                     datestr_with_timezone = exif[key]
                     break
