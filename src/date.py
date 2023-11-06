@@ -50,6 +50,10 @@ class Date:
             if key in exif and isinstance(exif[key], str) and not exif[key].startswith('0000'):
                 # Look for datestr with '-' or '+' to indicate time zone
                 if ('-' in exif[key]) or ('+' in exif[key]):
+                    # There is an exception for FileModifyDate since it may have timezone information
+                    # since new tools have changed it when we still want the old date.
+                    if (key == 'FileModifyDate'):
+                        continue
                     datestr_with_timezone = exif[key]
                     break
                 else:
