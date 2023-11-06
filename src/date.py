@@ -56,7 +56,8 @@ class Date:
                         continue
                     datestr_with_timezone = exif[key]
                     break
-                else:
+                # Take first option
+                elif (datestr_no_timezone is None):
                     datestr_no_timezone = exif[key]
                     # Do not break, keep looking for date string with time zone
 
