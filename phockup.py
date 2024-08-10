@@ -402,7 +402,7 @@ def main(options):
         output_prefix=options.output_prefix,
         output_suffix=options.output_suffix,
         from_date=options.from_date,
-        to_date=options.to_date
+        to_date=options.to_date,
         use_shallow_cmp=options.use_shallow_cmp
     )
 
